@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Capture Photo with Vue 3</title>
+    <script src="https://unpkg.com/vue@3.2.30/dist/vue.global.prod.js"></script>
+    <style>
+        /* Optional CSS styles */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app {
+            text-align: center;
+        }
+
+        img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1>Auto Capture Photo with Vue 3</h1>
+        <img ref="photoElement" :src="photoSrc" alt="Captured Image">
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        const app = createApp({
+            data() {
+                return {
+                    photoElement: null,
+                    photoSrc: ''
+                };
+            },
+            mounted() {
+                this.photoElement = this.$refs.photoElement;
+                this.capturePhoto();
+            },
+            methods: {
+                capturePhoto() {
+                    const videoElement = document.createElement('video');
+                    const canvasElement = document.createElement('canvas');
+                    const context = canvasElement.getContext('2d');
+
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                        .then(stream => {
+                            videoElement.srcObject = stream;
+                            videoElement.play();
+                            videoElement.addEventListener('loadedmetadata', () => {
+                                canvasElement.width = videoElement.videoWidth;
+                                canvasElement.height = videoElement.videoHeight;
+                                context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                                this.photoSrc = canvasElement.toDataURL('image/jpeg');
+                                videoElement.srcObject.getTracks().forEach(track => track.stop()); // 停止视频流
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error accessing media devices:', error);
+                        });
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+
+</html>
